@@ -1,0 +1,113 @@
+#include <iostream>
+#include <string>
+#include <cstdlib>
+#include <ctime>
+#include <algorithm> // to use transform()
+
+using namespace std;
+
+// Şifreleme ve çözme için karakter seti
+const string CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+// Rastgele anahtar üretme fonksiyonu
+string generateKey(int length) {
+    string key = "";
+    srand(time(0)); // Rastgele sayı üretici için başlangıç
+    for (int i = 0; i < length; i++) {
+        key += CHARSET[rand() % CHARSET.length()]; // CHARSET içinden rastgele karakter ekle
+    }
+    return key;
+}
+
+// Anahtar tekrarını sağlayan fonksiyon
+string extendKey(const string& key, int textLength) {
+    string extendedKey = "";
+    int keyLength = key.length();
+    for (int i = 0; i < textLength; i++) {
+        extendedKey += key[i % keyLength];
+    }
+    return extendedKey;
+}
+
+// Şifreleme fonksiyonu
+string encrypt(const string& text, const string& key) {
+    string encrypted = "";
+    for (size_t i = 0; i < text.length(); i++) {
+        int textIndex = CHARSET.find(text[i]);
+        int keyIndex = CHARSET.find(key[i]);
+        if (textIndex != string::npos && keyIndex != string::npos) {
+            encrypted += CHARSET[(textIndex + keyIndex) % CHARSET.length()];
+        } else {
+            encrypted += text[i]; // Geçersiz karakter için olduğu gibi ekle
+        }
+    }
+    return encrypted;
+}
+
+// Şifre çözme fonksiyonu
+string decrypt(const string& text, const string& key) {
+    string decrypted = "";
+    for (size_t i = 0; i < text.length(); i++) {
+        int textIndex = CHARSET.find(text[i]);
+        int keyIndex = CHARSET.find(key[i]);
+        if (textIndex != string::npos && keyIndex != string::npos) {
+            decrypted += CHARSET[(textIndex - keyIndex + CHARSET.length()) % CHARSET.length()];
+        } else {
+            decrypted += text[i]; // Geçersiz karakter için olduğu gibi ekle
+        }
+    }
+    return decrypted;
+}
+
+int main() {
+    int choice;
+
+    // Geliştirilmiş Menü
+    cout << "====================================\n";
+    cout << "|  1. Encoder (Şifreleme)          |\n";
+    cout << "|  2. Decoder (Şifre Çözme)        |\n";
+    cout << "|  0. Çıkış                        |\n";
+    cout << "====================================\n";
+    cout << "Seçiminizi yapın: ";
+    cin >> choice;
+
+    // Çıkış seçeneği
+    if (choice == 0) {
+        cout << "Programdan çıkılıyor...\n";
+        return 0;
+    }
+
+    // Kullanıcıdan metin girişi
+    string text;
+    cout << "Metni girin: ";
+    cin.ignore(); // önceden girilen 'choice' değerinden sonra kalan yeni satır karakterini temizler
+    getline(cin, text); // metni boşluklu alabilmek için getline kullanıyoruz
+
+    // Küçük harfleri büyük harfe çevir (metin içerisinde sadece büyük harfler kullanılıyorsa)
+    transform(text.begin(), text.end(), text.begin(), ::toupper);
+
+    if (choice == 1) {
+        // Encoder (Şifreleme)
+        int keyLength;
+        cout << "Anahtar uzunluğunu girin: ";
+        cin >> keyLength;
+        string key = generateKey(keyLength);
+        cout << "Rastgele Anahtar: " << key << endl;
+        string extendedKey = extendKey(key, text.length());
+        string encryptedText = encrypt(text, extendedKey);
+        cout << "Şifreli Metin: " << encryptedText << endl;
+    } else if (choice == 2) {
+        // Decoder (Şifre Çözme)
+        string key;
+        cout << "Anahtarı girin: ";
+        cin >> key;
+
+        string extendedKey = extendKey(key, text.length());
+        string decryptedText = decrypt(text, extendedKey);
+        cout << "Çözülmüş Metin: " << decryptedText << endl;
+    } else {
+        cout << "Geçersiz seçim!" << endl;
+    }
+
+    return 0;
+}
